@@ -19,6 +19,13 @@ class Vehicle(Turtle):
         self.arrete_au_feu = False
         self.arrete_devant_voiture = False
         self.force_passage = False # Pour dégager le carrefour à l'orange/rouge
+        self.compteur_attente = 0  # Patience pour briser les blocus
+        
+        # Hiérarchie par axes pour briser les blocus proprement
+        if self.direction_depart in ["nord", "sud"]:
+            self.seuil_patience = 60   # Environ 2.5s - L'axe Nord-Sud débloque le carrefour
+        else:
+            self.seuil_patience = 200  # Environ 8s - L'axe Est-Ouest attend que l'autre passe
 
         self.dessiner_look_voiture()
         self.penup()
@@ -75,12 +82,18 @@ class Vehicle(Turtle):
         # Si stoppée par feu OU par voiture devant, on ne bouge pas
         if not self.arrete_au_feu and not self.arrete_devant_voiture:
             self.forward(self.vitesse_actuelle)
+            if self.vitesse_actuelle > 0:
+                self.compteur_attente = 0 # On avance, on réinitialise la patience
 
     def verifier_priorite_droite(self, autres_voitures):
         """
         Applique la règle de la priorité à droite : 
         On s'arrête si une voiture arrive de notre droite.
+        Sauf si on attend depuis trop longtemps (bris de blocus).
         """
+        if self.compteur_attente > self.seuil_patience:
+            return False
+            
         droite = {"nord": "ouest", "sud": "est", "est": "nord", "ouest": "sud"}
         dir_droite = droite[self.direction_depart]
         
@@ -124,13 +137,14 @@ class Vehicle(Turtle):
             # LOGIQUE : Priorité à droite stricte
             if self.verifier_priorite_droite(autres_voitures) and not deja_passe:
                 # On doit ralentir et s'arrêter au stop
+                self.compteur_attente += 1 # On commence à perdre patience
                 self.vitesse_actuelle = self.vitesse_max / 2
                 # Rayon d'arrêt plus large pour la priorité
                 if 0 < dist_ligne < 70: 
                     self.arrete_au_feu = True
                     self.vitesse_actuelle = 0
             else:
-                # Pas de danger à droite -> passage prudent
+                # Pas de danger à droite (ou patience à bout) -> passage prudent
                 self.vitesse_actuelle = self.vitesse_max / 2
                 self.arrete_au_feu = False
                 self.force_passage = True

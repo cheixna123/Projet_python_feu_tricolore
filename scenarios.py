@@ -7,13 +7,14 @@ class Scenario:
     """
     Représente un scénario de simulation avec ses paramètres.
     """
-    def __init__(self, name, green_duration, orange_duration, red_duration, vehicle_speed, vehicle_frequency):
+    def __init__(self, name, green_duration, orange_duration, red_duration, vehicle_speed, vehicle_frequency, safety_duration=30):
         self.name = name
         self.green_duration = green_duration
         self.orange_duration = orange_duration
         self.red_duration = red_duration
         self.vehicle_speed = vehicle_speed
         self.vehicle_frequency = vehicle_frequency
+        self.safety_duration = safety_duration
 
 class ScenarioManager:
     """
@@ -25,10 +26,10 @@ class ScenarioManager:
         
         # Scénarios prédéfinis
         self.scenarios = {
-            "Normale": Scenario("Normale", 120, 40, 30, 2, 35),
-            "Heure de pointe": Scenario("Heure de pointe", 200, 40, 30, 1.5, 12),
-            "Mode nuit": Scenario("Mode nuit", 0, 0, 0, 3, 60),
-            "Manuel": Scenario("Manuel", 120, 40, 30, 2, 35)
+            "Normale": Scenario("Normale", 120, 40, 30, 4.5, 35, 40),
+            "Heure de pointe": Scenario("Heure de pointe", 200, 40, 30, 3.0, 12, 60),
+            "Mode nuit": Scenario("Mode nuit", 0, 0, 0, 7.0, 60, 0),
+            "Manuel": Scenario("Manuel", 120, 40, 30, 4.5, 35, 30)
         }
         
         self.current_scenario_name = "Normale"
@@ -100,7 +101,7 @@ class ScenarioManager:
         elif self.cycle_state == "ALL_RED_V_TO_H":
             self.light_v.set_state("ROUGE")
             self.light_h.set_state("ROUGE")
-            if self.timer >= self.all_red_duration:
+            if self.timer >= scenario.safety_duration:
                 self.cycle_state = "VERT_H"
                 self.timer = 0
                 
@@ -121,6 +122,6 @@ class ScenarioManager:
         elif self.cycle_state == "ALL_RED_H_TO_V":
             self.light_v.set_state("ROUGE")
             self.light_h.set_state("ROUGE")
-            if self.timer >= self.all_red_duration:
+            if self.timer >= scenario.safety_duration:
                 self.cycle_state = "VERT_V"
                 self.timer = 0
