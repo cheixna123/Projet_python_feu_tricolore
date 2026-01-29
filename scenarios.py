@@ -37,6 +37,12 @@ class ScenarioManager:
         self.timer = 0
         self.all_red_duration = 30
         
+        # Gestion du déblocage par vagues (Mode Nuit)
+        self.ns_wave_active = False
+        self.wave_timer = 0
+        self.cooldown_active = False
+        self.cooldown_timer = 0
+        
         self._apply_scenario("Normale")
 
     def set_scenario(self, name: str):

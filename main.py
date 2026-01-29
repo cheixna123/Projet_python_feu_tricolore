@@ -211,6 +211,34 @@ while encours:
         # D. Gestion des voitures
         params = manager.get_params()
         
+        # Gestion du déblocage par vague (Mode Nuit)
+        if manager.get_current_scenario() == "Mode nuit":
+            # Si pas de vague active ni cooldown, on check si un véhicule NS perd patience
+            if not manager.ns_wave_active and not manager.cooldown_active:
+                for v in liste_voitures:
+                    if v.direction_depart in ["nord", "sud"] and v.compteur_attente >= v.seuil_patience:
+                        manager.ns_wave_active = True
+                        manager.wave_timer = 500 # Environ 20s
+                        for veh in liste_voitures:
+                            if veh.direction_depart in ["nord", "sud"]:
+                                veh.compteur_attente = 0
+                        logger.log_action("BLOCUS", "Déblocage de l'axe Nord-Sud (Wave)", "ORANGE", "Mode nuit")
+                        break
+            elif manager.ns_wave_active:
+                manager.wave_timer -= 1
+                if manager.wave_timer <= 0:
+                    manager.ns_wave_active = False
+                    manager.cooldown_active = True
+                    manager.cooldown_timer = 300 # Environ 12s de calme imposé
+                    logger.log_action("SAFETY", "Pause de sécurité post-déblocage", "ROUGE", "Mode nuit")
+            elif manager.cooldown_active:
+                manager.cooldown_timer -= 1
+                if manager.cooldown_timer <= 0:
+                    manager.cooldown_active = False
+        else:
+            manager.ns_wave_active = False
+            manager.cooldown_active = False
+
         # Spawn
         if random.randint(1, params["frequency"]) == 1:
             sens = random.choice(["nord", "sud", "est", "ouest"])
@@ -221,10 +249,10 @@ while encours:
             # On détermine quel feu regarde la voiture
             feu_concerne = etat_v if voiture.direction_depart in ["nord", "sud"] else etat_h
             
-            # Compatibilité : les véhicules attendent "ORANGE_CLIGNOTANT" pour savoir quoi faire
-            # Mon get_state() le retourne déjà si c'est le cas
-            
-            voiture.verifier_feu(feu_concerne, liste_voitures)
+            # On passe l'état de la vague et du cooldown
+            voiture.verifier_feu(feu_concerne, liste_voitures, 
+                                 ns_wave_active=manager.ns_wave_active, 
+                                 cooldown_active=manager.cooldown_active)
             voiture.avancer(liste_voitures)
 
         # E. Nettoyage
