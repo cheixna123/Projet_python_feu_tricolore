@@ -4,13 +4,7 @@ from logger import Logger
 
 class GUI:
     def __init__(self, root, light_v, light_h, manager, logger, update_callback):
-        """
-        root: fenêtre Tkinter
-        light_v, light_h: instances de TrafficLight (Vertical et Horizontal)
-        manager: instance de ScenarioManager
-        logger: instance de Logger
-        update_callback: fonction à appeler pour commander le déroulement (play/pause/etc)
-        """
+ 
         self.root = root
         self.light_v = light_v
         self.light_h = light_h
@@ -35,7 +29,7 @@ class GUI:
         self.scenario_menu = tk.OptionMenu(self.frame, self.scenario_var, *options, command=self.change_scenario)
         self.scenario_menu.pack(pady=2)
 
-        # Contrôles manuels (simplifiés pour le carrefour)
+        # Contrôles manuels 
         tk.Label(self.frame, text="Feu Manuel (Mode Manuel)").pack(pady=5)
         
         # Bouton pour basculer les axes en mode manuel
@@ -68,7 +62,7 @@ class GUI:
         self.update_indicator()
 
     def toggle_manual_lights(self):
-        """Action pour le mode manuel : inverse les feux."""
+       
         if self.current_scenario == "Manuel":
             if self.light_v.get_state() == "VERT":
                 self.light_v.set_state("ROUGE")
