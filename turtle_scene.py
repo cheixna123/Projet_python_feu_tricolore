@@ -205,8 +205,7 @@ def dessiner_toute_l_interface(pen, mode_actuel, is_paused=False, manual_active=
     y_play = 235
     dessiner_bouton(pen, x_start, y_play, "PLAY", "#27ae60", not is_paused, width=70)
     dessiner_bouton(pen, x_start+75, y_play, "PAUSE", "#e67e22", is_paused, width=70)
-    dessiner_bouton(pen, x_start+150, y_play, "STOP", "#c0392b", False, width=70)
-    dessiner_bouton(pen, x_start+225, y_play, "RESET", "#3498db", False, width=70)
+    dessiner_bouton(pen, x_start+150, y_play, "RESET", "#3498db", False, width=70)
 
     # LIGNE 3 : CONTRÔLES MANUELS (Y=180)
     if manual_active:

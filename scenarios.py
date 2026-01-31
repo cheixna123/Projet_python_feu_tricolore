@@ -1,12 +1,7 @@
-"""
-Module scenarios.py
-Définit les différents scénarios de circulation et leur gestion.
-"""
+
 
 class Scenario:
-    """
-    Représente un scénario de simulation avec ses paramètres.
-    """
+
     def __init__(self, name, green_duration, orange_duration, red_duration, vehicle_speed, vehicle_frequency, safety_duration=30):
         self.name = name
         self.green_duration = green_duration
@@ -17,9 +12,7 @@ class Scenario:
         self.safety_duration = safety_duration
 
 class ScenarioManager:
-    """
-    Gère le scénario actuel et synchronise les deux feux du carrefour.
-    """
+
     def __init__(self, light_v, light_h):
         self.light_v = light_v
         self.light_h = light_h
@@ -37,7 +30,7 @@ class ScenarioManager:
         self.timer = 0
         self.all_red_duration = 30
         
-        # Gestion du déblocage par vagues (Mode Nuit)
+        
         self.ns_wave_active = False
         self.wave_timer = 0
         self.cooldown_active = False
@@ -71,12 +64,10 @@ class ScenarioManager:
             light.is_night_mode = night
             light.is_manual = manual
             if not night and not manual:
-                light.set_durations(scenario.green_duration, scenario.orange_duration, 0) # On gère le rouge via la synchro
+                light.set_durations(scenario.green_duration, scenario.orange_duration, 0) 
 
     def update(self):
-        """
-        Gère la synchronisation des deux feux.
-        """
+
         if self.current_scenario_name in ["Mode nuit"]:
             self.light_v.is_night_mode = True
             self.light_h.is_night_mode = True
@@ -88,8 +79,7 @@ class ScenarioManager:
         self.timer += 1
         scenario = self.scenarios[self.current_scenario_name]
         
-        # Logique de cycle synchronisé :
-        # VERT_V -> ORANGE_V -> ALL_RED -> VERT_H -> ORANGE_H -> ALL_RED
+
         if self.cycle_state == "VERT_V":
             self.light_v.set_state("VERT")
             self.light_h.set_state("ROUGE")

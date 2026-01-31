@@ -125,12 +125,7 @@ def gerer_clic(x, y):
                 logger.log_action("PAUSE", "Pause simulation", feu_v.get_state(), current_scen)
                 need_redraw = True
                 
-        elif 390 <= x <= 460: # STOP
-            is_paused = True
-            logger.log_action("STOP", "Arrêt simulation", feu_v.get_state(), current_scen)
-            need_redraw = True
-            
-        elif 465 <= x <= 535: # RESET
+        elif 390 <= x <= 460: # RESET (Ancairement à 465-535)
             is_paused = True
             # Reset voitures
             for v in liste_voitures:
