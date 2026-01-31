@@ -28,7 +28,7 @@ class ScenarioManager:
         self.scenarios = {
             "Normale": Scenario("Normale", 120, 40, 30, 4.5, 35, 40),
             "Heure de pointe": Scenario("Heure de pointe", 200, 40, 30, 3.0, 12, 60),
-            "Mode nuit": Scenario("Mode nuit", 0, 0, 0, 7.0, 60, 0),
+            "Mode nuit": Scenario("Mode nuit", 0, 0, 0, 4.5, 60, 0),
             "Manuel": Scenario("Manuel", 120, 40, 30, 4.5, 35, 30)
         }
         

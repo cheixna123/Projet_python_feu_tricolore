@@ -218,7 +218,7 @@ while encours:
                 for v in liste_voitures:
                     if v.direction_depart in ["nord", "sud"] and v.compteur_attente >= v.seuil_patience:
                         manager.ns_wave_active = True
-                        manager.wave_timer = 500 # Environ 20s
+                        manager.wave_timer = 125 # Environ 5s à 25 FPS
                         for veh in liste_voitures:
                             if veh.direction_depart in ["nord", "sud"]:
                                 veh.compteur_attente = 0
@@ -229,7 +229,7 @@ while encours:
                 if manager.wave_timer <= 0:
                     manager.ns_wave_active = False
                     manager.cooldown_active = True
-                    manager.cooldown_timer = 300 # Environ 12s de calme imposé
+                    manager.cooldown_timer = 50 # Environ 2s de calme imposé
                     logger.log_action("SAFETY", "Pause de sécurité post-déblocage", "ROUGE", "Mode nuit")
             elif manager.cooldown_active:
                 manager.cooldown_timer -= 1
@@ -239,10 +239,27 @@ while encours:
             manager.ns_wave_active = False
             manager.cooldown_active = False
 
-        # Spawn
+        # Spawn Sécurisé : On ne crée une voiture que si l'entrée est libre
         if random.randint(1, params["frequency"]) == 1:
             sens = random.choice(["nord", "sud", "est", "ouest"])
-            liste_voitures.append(Vehicle(sens, vitesse_max=params["speed"]))
+            
+            # Coordonnées théoriques de départ (à synchroniser avec vehicles.py)
+            COORD_DEPART = 420
+            DECALAGE = 35
+            pos_depart = (0, 0)
+            if sens == "nord": pos_depart = (-DECALAGE, COORD_DEPART)
+            elif sens == "sud": pos_depart = (DECALAGE, -COORD_DEPART)
+            elif sens == "est": pos_depart = (COORD_DEPART, DECALAGE)
+            elif sens == "ouest": pos_depart = (-COORD_DEPART, -DECALAGE)
+            
+            entree_libre = True
+            for v in liste_voitures:
+                if v.distance(pos_depart) < 60:
+                    entree_libre = False
+                    break
+            
+            if entree_libre:
+                liste_voitures.append(Vehicle(sens, vitesse_max=params["speed"]))
 
         # Déplacement
         for voiture in liste_voitures:

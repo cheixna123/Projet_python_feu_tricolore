@@ -86,33 +86,31 @@ class Vehicle(Turtle):
             if self.vitesse_actuelle > 0:
                 self.compteur_attente = 0
 
-    def verifier_priorite_droite(self, autres_voitures, ignore_priority=False):
+    def verifier_priorite_droite(self, autres_voitures, dist_ma_ligne, ignore_priority=False):
         """
-        Applique la règle de la priorité à droite : 
-        On s'arrête si une voiture arrive de notre droite.
-        Sauf si ignore_priority est forcée.
+        Applique la règle de la priorité à droite STRICTE.
+        On n'active le radar que si on approche du carrefour (110px).
         """
-        if ignore_priority:
-            return False
+        if ignore_priority: return False
+        
+        # On ne s'occupe de la priorité que si on approche réellement
+        if dist_ma_ligne > 110: return False
             
         droite = {"nord": "ouest", "sud": "est", "est": "nord", "ouest": "sud"}
         dir_droite = droite[self.direction_depart]
         
-        # On ne vérifie que si on est dans la zone d'approche du carrefour
-        pos = self.ycor() if self.direction_depart in ["nord", "sud"] else self.xcor()
-        if abs(pos) > 250: return False
-
         for autre in autres_voitures:
             if autre.direction_depart == dir_droite:
-                # La voiture à droite est-elle dans le carrefour ou l'approche ?
+                # Distance de l'autre par rapport à SA ligne de stop
                 d_autre = 0
                 if autre.direction_depart == "nord": d_autre = autre.ycor() - DISTANCE_STOP
                 elif autre.direction_depart == "sud": d_autre = -DISTANCE_STOP - autre.ycor()
                 elif autre.direction_depart == "est": d_autre = autre.xcor() - DISTANCE_STOP
                 elif autre.direction_depart == "ouest": d_autre = -DISTANCE_STOP - autre.xcor()
                 
-                # Zone élargie : de 150px avant à 150px après la ligne (carrefour traversé)
-                if -150 < d_autre < 150:
+                # BLOCAGE : Si la voiture de droite approche (120px)
+                # OU si elle est encore dans le carrefour (n'a pas fini de libérer la voie)
+                if -130 < d_autre < 120:
                     return True
         return False
 
@@ -142,29 +140,54 @@ class Vehicle(Turtle):
             return
 
         if etat_feu == "ORANGE_CLIGNOTANT":
-            # LIBÉRATION PAR VAGUE (Solution user)
-            is_ns = self.direction_depart in ["nord", "sud"]
-            if ns_wave_active and is_ns:
+            # 1. SI DÉJÀ ENGAGÉ : On dégage au plus vite
+            if deja_passe:
                 self.vitesse_actuelle = self.vitesse_max
                 self.arrete_au_feu = False
-                self.force_passage = True
                 return
 
-            # LOGIQUE : Priorité à droite stricte (on incrémente la patience pour trigger la vague)
-            if self.verifier_priorite_droite(autres_voitures) and not deja_passe:
-                # Si on est arrêté (dist_ligne proche de 0), on incrémente la patience
+            # 2. RADAR D'ENGAGEMENT INTELLIGENT : 
+            # On s'arrête seulement si l'axe PERPENDICULAIRE est déjà engagé.
+            axe_perpendiculaire_libre = True
+            for autre in autres_voitures:
+                if autre != self and (abs(autre.xcor()) < 80 and abs(autre.ycor()) < 80):
+                    # Si je suis NS, je ne m'arrête que si l'autre est EW
+                    est_perpendiculaire = False
+                    if self.direction_depart in ["nord", "sud"] and autre.direction_depart in ["est", "ouest"]:
+                        est_perpendiculaire = True
+                    elif self.direction_depart in ["est", "ouest"] and autre.direction_depart in ["nord", "sud"]:
+                        est_perpendiculaire = True
+                        
+                    if est_perpendiculaire:
+                        axe_perpendiculaire_libre = False
+                        break
+            
+            if not axe_perpendiculaire_libre:
+                # Quelqu'un barre la route, on attend à la ligne
+                if 0 < dist_ligne < 70:
+                    self.vitesse_actuelle = 0
+                    self.arrete_au_feu = True
+                else:
+                    self.vitesse_actuelle = self.vitesse_max / 2
+                return
+
+            # 3. PRIORITÉ À DROITE (Sauf si vague NS active)
+            is_ns = self.direction_depart in ["nord", "sud"]
+            ignore = ns_wave_active and is_ns
+            
+            if self.verifier_priorite_droite(autres_voitures, dist_ligne, ignore_priority=ignore):
+                # On s'arrête pour la priorité
                 if 0 < dist_ligne < 70:
                     self.compteur_attente += 1
-                
-                self.vitesse_actuelle = self.vitesse_max / 2
-                if 0 < dist_ligne < 70: 
-                    self.arrete_au_feu = True
                     self.vitesse_actuelle = 0
+                    self.arrete_au_feu = True
+                else:
+                    self.vitesse_actuelle = self.vitesse_max / 2
             else:
-                # Pas de danger à droite -> passage prudent
-                self.vitesse_actuelle = self.vitesse_max / 2
+                # Tout est clair : Engagement prudent
+                self.vitesse_actuelle = self.vitesse_max
                 self.arrete_au_feu = False
-                self.force_passage = True
+                if ignore: self.force_passage = True
             return
 
         if etat_feu == "ORANGE":
